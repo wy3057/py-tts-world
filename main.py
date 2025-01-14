@@ -12,7 +12,7 @@ def crop_bottom_third_from_variable(image):
     width, height = image.size
 
     # 计算裁剪区域
-    upper = height * 6 // 7
+    upper = height * 5 // 6
     # 上边界为图像高度的 2/3
 
     rect = (0, upper, width, height)  # 裁剪区域 (x1, y1, x2, y2)
@@ -23,37 +23,180 @@ def crop_bottom_third_from_variable(image):
     return cropped_image
 
 
+def crop_bottom__from_variable(image):
+    """
+    裁剪图片的下三分之一，并返回裁剪后的图片。
+
+    Args:
+        image (PIL.Image.Image): 输入的图片对象。
+
+    Returns:
+        PIL.Image.Image: 裁剪后的图片对象。
+    """
+    # 获取图像尺寸
+    width, height = image.size
+
+    # 计算裁剪区域
+    upper = height * 3 // 4
+    down = height * 5 // 6
+    # 上边界为图像高度的 2/3
+
+    rect = (0, upper, width, down)  # 裁剪区域 (x1, y1, x2, y2)
+
+    # 裁剪图像
+    personimage = image.crop(rect)
+
+    return personimage
+
+
 import capture_genshin_window
-import crop_image_rect
 
 windowtitle = "原神"
 picture = capture_genshin_window.capture_specific_window(windowtitle)
 cuttedimage = crop_bottom_third_from_variable(picture)
-
+persoimage = crop_bottom__from_variable(picture)
 from cnocr import CnOcr
 
 img_fp = cuttedimage
 ocr = CnOcr()
 out = ocr.ocr(img_fp)
 
+ocr = CnOcr()
+ou = ocr.ocr(persoimage)
 print("Predicted Chars:", out)
-
+print("name", ou)
 predicted_chars = out
-
+name = ou
 # 设置置信度阈值
 confidence_threshold = 0.1
 
 # 过滤掉低置信度和无关信息
+
+
+# 拼接文本片段
 filtered_text = []
 for item in predicted_chars:
     if item['score'] >= confidence_threshold and not item['text'].startswith('UID'):
         filtered_text.append(item['text'])
 
-# 拼接文本片段
-final_text = ''.join(filtered_text)
+name_text = []
+for item in name:
+    if item['score'] >= confidence_threshold and not item['text'].startswith('UID'):
+        name_text.append(item['text'])
+import requests
+import pygame
+import tempfile
+import os
 
+
+def text_to_speech(text, voice='派蒙', speed=0.2, pitch=0.6, pause=0.8, style=1):
+    """
+    调用TTS API将文本转换为语音
+
+    参数:
+        text (str): 要转换的文本
+        voice (str): 语音角色
+        speed (float): 语速
+        pitch (float): 音调
+        pause (float): 停顿
+        style (int): 风格
+    """
+    # API配置
+    if voice is None:
+        voice = ou
+    url = "https://tts.bgi.sh/v1/audio/speech"
+    headers = {
+        "Authorization": "Bearer sk-bgi",
+        "Content-Type": "application/json"
+    }
+
+    # 请求数据
+    payload = {
+        "prompt": text,
+        "voice": voice,
+        "speed": speed,
+        "pitch": pitch,
+        "pause": pause,
+        "style": style
+    }
+
+    try:
+        # 发送POST请求
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()  # 检查响应状态
+
+        # 解析响应
+        result = response.json()
+        if result["status"] == "success":
+            return result["audio_url"]
+        else:
+            raise Exception("API调用失败")
+
+    except requests.exceptions.RequestException as e:
+        print(f"请求错误: {e}")
+        return None
+    except Exception as e:
+        print(f"发生错误: {e}")
+        return None
+
+
+def download_and_play_audio(audio_url):
+    """
+    下载并播放音频文件
+
+    参数:
+        audio_url (str): 音频文件URL
+    """
+    try:
+        # 下载音频文件
+        response = requests.get(audio_url)
+        response.raise_for_status()
+
+        # 创建临时文件
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
+            temp_file.write(response.content)
+            temp_path = temp_file.name
+
+        # 初始化pygame混音器
+        pygame.mixer.init()
+
+        # 加载并播放音频
+        pygame.mixer.music.load(temp_path)
+        pygame.mixer.music.play()
+
+        # 等待播放完成
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
+
+        # 清理临时文件
+        pygame.mixer.quit()
+        os.unlink(temp_path)
+
+    except Exception as e:
+        print(f"播放音频时发生错误: {e}")
+
+
+def main():
+    # 示例使用
+    text = final_text
+    audio_url = text_to_speech(text)
+
+    if audio_url:
+        print(f"生成的音频URL: {audio_url}")
+        download_and_play_audio(audio_url)
+    else:
+        print("音频生成失败")
+
+
+final_text = ''.join(filtered_text)
+name_text = ''.join(name_text)
 print(final_text)
+print(name_text)
 cuttedimage.show()
+persoimage.show()
+main()
+"""
+
 # -*- coding:utf-8 -*-
 #
 #   author: iflytek
@@ -197,8 +340,9 @@ if __name__ == "__main__":
     wsParam = Ws_Param(APPID='628045d2', APISecret='ZWNiOTBkNjQyMTkxMDQxMGI0NGJiNGJi',
                        APIKey='6445f4c33fd07566ca17b90ca5535b14',
                        Text=final_text)
-    websocket.enableTrace(False)
+    websocket.enableTrace(True)
     wsUrl = wsParam.create_url()
     ws = websocket.WebSocketApp(wsUrl, on_message=on_message, on_error=on_error, on_close=on_close)
     ws.on_open = on_open
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE})
+"""
