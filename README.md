@@ -6,3 +6,4 @@
 2. 解决语音合成太慢
 3. 自动剧情时候可以合成
 4. and so on
+![img.png](readmeimg/img.png)
