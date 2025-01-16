@@ -1,0 +1,9 @@
+PyQt5~=5.15.11
+cnocr~=2.3.1
+pillow~=10.4.0
+websocket-client~=1.8.0
+requests~=2.32.3
+PyAutoGUI~=0.9.54
+keyboard~=0.13.5
+PyGetWindow~=0.0.9
+pygame~=2.6.1
