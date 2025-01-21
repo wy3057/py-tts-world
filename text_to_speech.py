@@ -1,5 +1,6 @@
 import requests
-def text_to_speech(text, voice='派蒙', speed=0.2, pitch=0.6, pause=0.8, style=1):
+
+def text_to_speech(text, voice='派蒙', speed=0.2, pitch=0.6, pause=0.8, style=1, url="https://tts.bgi.sh/v1/audio/speech"):
     """
 
     调用TTS API将文本转换为语音
@@ -11,11 +12,11 @@ def text_to_speech(text, voice='派蒙', speed=0.2, pitch=0.6, pause=0.8, style=
         pitch (float): 音调
         pause (float): 停顿
         style (int): 风格
+        url (str): TTS服务器地址
     """
     # API配置
     if voice is None:
         voice = ou
-    url = "https://tts.bgi.sh/v1/audio/speech"
     headers = {
         "Authorization": "Bearer sk-bgi",
         "Content-Type": "application/json"

@@ -32,21 +32,20 @@ def capture_specific_window(window_title):
             print("退出监听。")
             break
 
-        # 检测鼠标左键按下
-        if keyboard.is_pressed('o'):
-            print("检测到o键按下，正在截图...")
-            # 截图指定窗口区域
-            screenshot = pyautogui.screenshot(region=(x, y, width, height))
-            picture = screenshot
-            print("截图完成！")
-            # 退出循环
-            break
+        # 检查当前活动窗口是否为指定窗口
+        active_window = win32gui.GetForegroundWindow()
+        active_window_title = win32gui.GetWindowText(active_window)
+        if active_window_title == window_title:
+            # 检测鼠标左键按下
+            if keyboard.is_pressed('o'):
+                print("检测到o键按下，正在截图...")
+                # 截图指定窗口区域
+                screenshot = pyautogui.screenshot(region=(x, y, width, height))
+                picture = screenshot
+                print("截图完成！")
+                # 退出循环
+                break
+        else:
+            print("当前活动窗口不是指定窗口，请将焦点放在指定窗口上。")
 
     return picture
-
-# 调用函数
-window_title = "原神"  # 指定窗口标题
-picture = capture_specific_window(window_title)
-
-#if picture:
-  #  picture.show()  # 显示截图
