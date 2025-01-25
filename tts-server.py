@@ -7,6 +7,7 @@ import platform
 import simplejson as json
 import logging
 import uuid
+import ctypes
 from typing import Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -26,6 +27,33 @@ from modelscope.pipelines.builder import PIPELINES
 from modelscope.models.base import Model, TorchModel
 from modelscope.models.builder import MODELS
 import sortedcontainers as sc
+
+# 检查管理员权限
+def is_admin():
+    """检查是否以管理员权限运行"""
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
+# 以管理员权限重启程序
+def restart_as_admin():
+    """以管理员权限重启程序"""
+    if is_admin():
+        return True
+        
+    try:
+        if sys.platform == 'win32':
+            ctypes.windll.shell32.ShellExecuteW(
+                None, "runas", sys.executable, " ".join(sys.argv), None, 1
+            )
+            sys.exit()
+        else:
+            print("此功能仅支持Windows系统")
+            return True
+    except:
+        print("获取管理员权限失败")
+        return False
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -280,6 +308,13 @@ def main():
     print("运行过程中请勿关闭此窗口\n")
 
     try:
+        # 检查管理员权限
+        if not is_admin():
+            print_step("正在请求管理员权限...")
+            if not restart_as_admin():
+                print_error("无法获取管理员权限，程序可能无法正常运行")
+                input("按Enter继续以普通权限运行，或关闭程序")
+        
         check_python()
         check_and_install_dependencies()
         setup_server()
